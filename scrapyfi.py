@@ -153,7 +153,7 @@ def search_contract(projects, query):
     return results
 
 projects = []
-if parser.get('list_programs', None) or parser.get('search_query', None):
+if parser.get('list_programs', None) or parser.get('query', None):
     projects = get_data()
 
 if parser.get('list_programs', None):      
@@ -176,9 +176,9 @@ if parser.get('list_programs', None):
     else:
         display_projects(projects)
 
-if parser.get('search_query', None):
-    print(f"Searching for {parser.get('search_query')}...")
-    res = search_contract(projects, parser.get('search_query'))
+if parser.get('query', None):
+    print(f"Searching for {parser.get('query')}...")
+    res = search_contract(projects, parser.get('query'))
     if res:
         display_projects(res)        
         for item in res:
@@ -197,5 +197,5 @@ if parser.get('search_query', None):
             if parser.get('download', None):
                 download_contracts(item.assets_in_scope['contract'], project_name=item.project)
     else:
-        print(f"Not able to find project : {parser.get('search_query')}")
+        print(f"Not able to find project : {parser.get('query')}")
 
