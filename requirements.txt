@@ -1,0 +1,5 @@
+bs4
+requests
+argparse
+terminal_banner
+termcolor
