@@ -1,0 +1,2 @@
+# scrapyFi
+Scrapper for Immunefi
