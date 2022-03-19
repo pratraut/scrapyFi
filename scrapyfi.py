@@ -48,9 +48,14 @@ search_argp = sub_argp.add_parser("search", help="Search programs")
 search_argp.add_argument("-q", "--query", help="Query particular program by its name. Ex. MakerDAO", required=True)
 search_argp.add_argument("-d", "--download", help="Download all contracts code from queried program", action="store_true")
 
+# Search
+download_argp = sub_argp.add_parser("download", help="Download code from link")
+download_argp.add_argument("links", help="Download all contracts code from provided links (space separated)", nargs='+')
+download_argp.add_argument("-fn", "--folder-name", help="Folder name to store contracts", default="Custom Downloads")
+
 parser = vars(argp.parse_args())
 
-# print(vars(parser))
+# print(parser)
 
 def get(obj, id):
     if id in obj and obj[id]:
@@ -69,7 +74,7 @@ def get_assets(assets):
         if 'github' in asset['target']:
             # new_assets['github'] = new_assets.get('github', [])
             new_assets['github'].append(asset['target'])
-        elif '0x' in asset['target']:
+        elif '/0x' in asset['target']:
             # new_assets['contract'] = new_assets.get('contract', [])
             new_assets['contract'].append(asset['target'])
         else:
@@ -185,7 +190,7 @@ if parser.get('query', None):
             print(f"Links for {item.project}:")
             for rec in item.assets_in_scope:
                 print(f"{rec.upper()}:")
-                i = 0
+                i = 1
                 if not item.assets_in_scope[rec]:
                     print("\tNO DATA FOUND\n")
                 for link in item.assets_in_scope[rec]:
@@ -199,3 +204,5 @@ if parser.get('query', None):
     else:
         print(f"Not able to find project : {parser.get('query')}")
 
+if parser.get('links', None):
+    download_contracts(parser.get('links'), project_name=parser.get('folder_name'))
