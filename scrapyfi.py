@@ -1,8 +1,9 @@
 from bs4 import BeautifulSoup
 import requests, os, json, argparse, re
 from lib.helper import *
+from lib.github_downloader import *
 
-import terminal_banner, termcolor, platform, datetime
+import terminal_banner, termcolor, platform, time
 
 COLOR = '\033[32m'
 banner_text = f"""{COLOR}                                                                 
@@ -16,7 +17,7 @@ banner_text = f"""{COLOR}
                     Author: savi0ur
 """
 
-desc = "Helps in Search of program and Download contracts of program from immunefi"
+desc = "Helps in Search of program and Download contracts of a program from immunefi"
 dev_info = """
 v1.0
 Developed by: Prathamesh Raut (savi0ur)
@@ -42,13 +43,15 @@ list_argp.add_argument("-lcl", "--least-contract-link", help="display by least c
 list_argp.add_argument("-lgl", "--least-github-link", help="display by least github link", action="store_true")
 list_argp.add_argument("-lol", "--least-other-link", help="display by least other link", action="store_true")
 list_argp.add_argument("-ltl", "--least-total-link", help="display by least total link", action="store_true")
+list_argp.add_argument("-ltc", "--least-total-contracts", help="display by least total contracts", action="store_true")
+list_argp.add_argument("-t", "--test", help="test", action="store_true")
 
 # Search
 search_argp = sub_argp.add_parser("search", help="Search programs")
 search_argp.add_argument("-q", "--query", help="Query particular program by its name. Ex. MakerDAO", required=True)
 search_argp.add_argument("-d", "--download", help="Download all contracts code from queried program", action="store_true")
 
-# Search
+# Download
 download_argp = sub_argp.add_parser("download", help="Download code from link")
 download_argp.add_argument("links", help="Download all contracts code from provided links (space separated)", nargs='+')
 download_argp.add_argument("-fn", "--folder-name", help="Folder name to store contracts", default="Custom Downloads")
@@ -108,34 +111,29 @@ def get_data():
             project_detail['technologies'] = get(project, 'technologies')
             project_detail['kyc'] = get(project, 'kyc')
             project_detail['assets_in_scope'] = get_assets(get(project, 'assets_in_scope'))
-            project_detail['url'] = get(project, 'url')
+            project_detail['url'] = get(project, 'url')            
+            project_detail['num_contracts'] = 0
+            if parser.get('least_total_contracts', None):
+                # print("Project = ", project_detail['project'])
+                project_detail['num_contracts'] = get_number_of_contracts(contract_list=project_detail['assets_in_scope']['contract']) 
+                    # count_github_files(project_detail['assets_in_scope']['github'])
             projects.append(Project(**project_detail))
-        except:
-            print(project)
+        except Exception as err:
+            print("Exception =", err)
 
     return projects
-    '''
-
-    FORMAT = "%-30s %-20s %-20s"
-    print(FORMAT % ("Project", "Reward($)", "Tech"))
-    print('-'*80)
-    for bounty in bounties:
-        project = bounty['project']
-        max_reward = bounty['maximum_reward']
-        tech = ' | '.join(bounty['technologies'])
-        # assets_in_scope = []
-        # for asset in bounty['assets_in_scope']:
-        #     assets_in_scope.append(asset['target'])
-
-        print(FORMAT % (project, max_reward, tech))
-    '''
-
-def display_projects(projects, type=None):
+  
+def display_projects(projects, type=None, option=None):
     print(f"NOTE: Ignoring programs with zero contract links")
+    
     FORMAT = "%5s %-40s %-20s %-30s %20s"
     print('-'*120)
-    print(FORMAT % ("SN", "Project", "Reward($)", "Tech", "#Links"))
+    if option == 'ltc':
+        print(FORMAT % ("SN", "Project", "Reward($)", "Tech", "#Contracts"))
+    else:
+        print(FORMAT % ("SN", "Project", "Reward($)", "Tech", "#Links"))
     print('-'*120)
+    
     sn = 1
     for project in projects:
         tech = '|'.join(project.technologies) if project.technologies else None
@@ -143,6 +141,12 @@ def display_projects(projects, type=None):
             if project.assets_in_scope[type]:
                 print(FORMAT % (sn, project.project, project.maximum_reward, tech, len(project.assets_in_scope[type])))
                 sn += 1
+        elif option == 'ltc':
+            # number_contracts = sum((project.num_contracts[k]) for k in project.num_contracts)
+            number_contracts = project.num_contracts
+            if number_contracts:
+                print(FORMAT % (sn, project.project, project.maximum_reward, tech, number_contracts))
+                sn += 1   
         else:
             number_contract_links = sum(len(project.assets_in_scope[k]) for k in project.assets_in_scope)
             if number_contract_links:
@@ -159,7 +163,10 @@ def search_contract(projects, query):
 
 projects = []
 if parser.get('list_programs', None) or parser.get('query', None):
+    t0 = time.time()
     projects = get_data()
+    t1 = time.time()
+    print(f"{t1-t0} seconds to process {len(projects)} projects.")
 
 if parser.get('list_programs', None):      
     if parser.get('least_contract_link', None):
@@ -178,6 +185,18 @@ if parser.get('list_programs', None):
         print(f"Filtering by Least total number of links...")
         filtered_projects = sorted(projects, key=lambda x: sum(len(x.assets_in_scope[k]) for k in x.assets_in_scope), reverse=False)
         display_projects(filtered_projects)
+    elif parser.get('least_total_contracts', None):
+        print(f"Filtering by Least total number of contracts...")
+        # filtered_projects = sorted(projects, key=lambda x: sum((x.num_contracts[k]) for k in x.num_contracts), reverse=False)
+        # import pdb; pdb.set_trace()
+        filtered_projects = sorted(projects, key=lambda x: x.num_contracts, reverse=False)
+        display_projects(filtered_projects, option='ltc')
+    elif parser.get('test', None):
+        print('Testing')
+        LINK = ['https://etherscan.io/address/0xeecee260a402fe3c20e5b8301382005124bef121a', \
+            'https://etherscan.io/address/0xde229e52bdb72c449db7912968e51d9d5e793005', \
+            'https://etherscan.io/address/0xca1bf9e6add6155e92dc1dc7c0bf210c159a2f43']
+        print(get_number_of_contracts(contract_list=LINK))
     else:
         display_projects(projects)
 
@@ -201,6 +220,7 @@ if parser.get('query', None):
         for item in res:
             if parser.get('download', None):
                 download_contracts(item.assets_in_scope['contract'], project_name=item.project)
+                download_github(item.assets_in_scope['github'], project_name=item.project)
     else:
         print(f"Not able to find project : {parser.get('query')}")
 

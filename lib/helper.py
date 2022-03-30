@@ -3,6 +3,7 @@ import re
 import sys
 import requests
 import html.parser
+import concurrent.futures
 
 class Project(object):
     def __init__(self, **kwargs):
@@ -14,6 +15,7 @@ class Project(object):
         self.kyc = kwargs['kyc']
         self.assets_in_scope = kwargs['assets_in_scope']
         self.url = kwargs['url']
+        self.num_contracts = kwargs['num_contracts']
 
 class EtherscanPattern:
     CODE = r"<pre class='js-sourcecopyarea editor' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
@@ -123,6 +125,28 @@ def download(link, project_name):
         
     print(f"[#] {contract_name} smart contract code downloaded successfully in {output_path}.\n")
 
+def get_contract_count(link):
+    if '#code' not in link and 'blockscout' not in link:
+        link += '#code'
+    elif 'blockscout' in link and 'contracts' not in link:
+        link += '/contracts'
+
+    _, FILENAME_PATTERN, _ = get_patterns(link)
+    try:
+        res = requests.get(f"{link}", headers=headers).text
+        filename_pattern = re.compile(FILENAME_PATTERN)
+        filenames = filename_pattern.findall(res)
+    except Exception as err:
+        raise err
+
+    try:
+        if not filenames:
+            return 1   
+        return len(filenames)
+    except Exception as err:
+        print("Exception = ", err)
+        return 0
+    
 def download_contracts(contract_list, project_name):
     if not contract_list:
         print(f"Contract list for \"{project_name}\" is empty.")
@@ -140,12 +164,44 @@ def download_contracts(contract_list, project_name):
             # print(err)
             print(f'Error: while downloading - Contract might be updated/deleted or contains bytecode\n')
 
-# if __name__== "__main__":
-#     banner()
-#     if len(sys.argv) != 3:
-#         print("Usage: python3 download_contracts.py chain_id contract_address")
-#         sys.exit(0)
-#     elif len(sys.argv) == 3:
-#         chain = str(sys.argv[1])
-#         target = str(sys.argv[2])
-#         main(chain, target)
+def get_number_of_contracts(contract_list):
+    contract_count = {}
+    
+    if not contract_list:
+        return 0        
+    
+    MAX_THREADS = 30
+    threads = min(MAX_THREADS, len(contract_list))
+    for url in contract_list:
+        contract_count[url] = 0
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
+        # executor.map(get_contract_count, contract_list)
+        future_to_url = {executor.submit(get_contract_count, url): url for url in contract_list}
+        for future in concurrent.futures.as_completed(future_to_url):
+            url = future_to_url[future]
+            try:
+                data = future.result()
+            except Exception as exc:
+                print('%r generated an exception: %s' % (url, exc))
+            else:
+                # print('%r is having %d contracts' % (url, data))
+                contract_count[url] += data
+
+    return sum(contract_count.values())
+    
+    '''
+    for contract_link in contract_list:
+        if '#code' not in contract_link and 'blockscout' not in contract_link:
+            contract_link += '#code'
+        elif 'blockscout' in contract_link and 'contracts' not in contract_link:
+            contract_link += '/contracts'
+        # print(f"Downloading contract(s) from {contract_link}:")
+        try:
+            # contract_count[contract_link] = get_contract_count(contract_link)
+            contract_count += get_contract_count(contract_link)
+        except Exception as err:
+            # print(err)
+            print(f'Error: while counting contracts - Contract might be updated/deleted or contains bytecode\n')
+    return contract_count
+    '''
