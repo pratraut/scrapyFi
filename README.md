@@ -88,7 +88,6 @@ $ python3 scrapyfi.py list
                     Author: savi0ur
 Helps in Searching and Downloading contracts of a program from Immunefi
 v1.0
-Developed by: Prathamesh Raut (savi0ur)
 
 122.7532970905304 seconds to process 291 projects.
 NOTE: Ignoring programs with zero contract links
@@ -119,7 +118,6 @@ $ python3 scrapyfi.py search -q "wormhole"
                     Author: savi0ur
 Helps in Searching and Downloading contracts of a program from Immunefi
 v1.0
-Developed by: Prathamesh Raut (savi0ur)
 
 Searching for wormhole...
 3.4474568367004395 seconds to process 1 projects.
@@ -161,7 +159,6 @@ $ python3 scrapyfi.py download -fn "Custom Download" https://etherscan.io/addres
                     Author: savi0ur
 Helps in Searching and Downloading contracts of a program from Immunefi
 v1.0
-Developed by: Prathamesh Raut (savi0ur)
 
 Downloading contract(s) from https://etherscan.io/address/0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B#code:
 [#] Directory /Users/pratraut/Public/scrapyFi/downloaded_contracts/Custom Download/Wormhole_1 has been created.
