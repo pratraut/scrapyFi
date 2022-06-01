@@ -8,7 +8,7 @@
                                 ||      .. |                   
                                ''''      ''                                                                                                
 ```
-Scrapper for Immunefi. It will help you to perform below task:
+Scraper for Immunefi. It will help you to perform below task:
 1. List all the projects from immunefi with basic details in tabular form
 2. Query particular project with its project name and list basic details alongs with all smart contract links. It will also let you download all those contracts.
 3. Download all contracts from provided links
