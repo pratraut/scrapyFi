@@ -23,7 +23,6 @@ banner_text = f"""{COLOR}
 desc = "Helps in Searching and Downloading contracts of a program from Immunefi"
 dev_info = """
 v1.0
-Developed by: Prathamesh Raut (savi0ur)
 """
 
 if(platform.system() == 'Windows'):
