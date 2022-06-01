@@ -5,6 +5,9 @@ from lib.github_downloader import *
 
 import terminal_banner, termcolor, platform, time
 
+from rich.console import Console
+from rich.table import Table
+
 COLOR = '\033[32m'
 banner_text = f"""{COLOR}                                                                 
                                                  '||''''|  ||  
@@ -17,7 +20,7 @@ banner_text = f"""{COLOR}
                     Author: savi0ur
 """
 
-desc = "Helps in Search of program and Download contracts of a program from Immunefi"
+desc = "Helps in Searching and Downloading contracts of a program from Immunefi"
 dev_info = """
 v1.0
 Developed by: Prathamesh Raut (savi0ur)
@@ -39,12 +42,12 @@ sub_argp = argp.add_subparsers(help="Commands")
 # List
 list_argp = sub_argp.add_parser("list", help="List programs")
 list_argp.add_argument("list_programs", help="List all the programs with basic info", action="store_true")
-list_argp.add_argument("-lcl", "--least-contract-link", help="display by least contract link", action="store_true")
-list_argp.add_argument("-lgl", "--least-github-link", help="display by least github link", action="store_true")
-list_argp.add_argument("-lol", "--least-other-link", help="display by least other link", action="store_true")
-list_argp.add_argument("-ltl", "--least-total-link", help="display by least total link", action="store_true")
-list_argp.add_argument("-ltc", "--least-total-contracts", help="display by least total contracts", action="store_true")
-list_argp.add_argument("-t", "--test", help="test", action="store_true")
+list_argp.add_argument("-lcl", "--least-contract-link", help="list projects by least contract link", action="store_true")
+list_argp.add_argument("-lgl", "--least-github-link", help="list projects by least github link", action="store_true")
+list_argp.add_argument("-lol", "--least-other-link", help="list projects by least other link", action="store_true")
+list_argp.add_argument("-ltl", "--least-total-link", help="list projects by least total link", action="store_true")
+list_argp.add_argument("-ltc", "--least-total-contracts", help="list projects by least total contracts", action="store_true")
+# list_argp.add_argument("-t", "--test", help="test", action="store_true")
 
 # Search
 search_argp = sub_argp.add_parser("search", help="Search programs")
@@ -59,6 +62,9 @@ download_argp.add_argument("-fn", "--folder-name", help="Folder name to store co
 parser = vars(argp.parse_args())
 
 # print(parser)
+
+def get_dollar_repr(num):
+    return "${:,}".format(num)
 
 def get(obj, id):
     if id in obj and obj[id]:
@@ -173,13 +179,27 @@ def get_data(query=None):
 def display_projects(projects, type=None, option=None):
     print(f"NOTE: Ignoring programs with zero contract links")
     
-    FORMAT = "%5s %-40s %-20s %-30s %20s"
-    print('-'*120)
+    console = Console()
+
+    table = Table(show_header=True, header_style="bold magenta")
+
+    # FORMAT = "%5s %-40s %-20s %-30s %20s"
+    # print('-'*120)
     if option == 'ltc':
-        print(FORMAT % ("SN", "Project", "Reward($)", "Tech", "#Contracts"))
+        # print(FORMAT % ("SN", "Project", "Reward($)", "Tech", "#Contracts"))
+        for col in ["SN", "Project", "Reward", "Technologies", "#Contracts"]:
+            if col == "Reward":
+                table.add_column(col, justify="center", header_style="cyan", style="green")
+            else:
+                table.add_column(col, justify="center", header_style="cyan")
     else:
-        print(FORMAT % ("SN", "Project", "Reward($)", "Tech", "#Links"))
-    print('-'*120)
+        # print(FORMAT % ("SN", "Project", "Reward($)", "Tech", "#Links"))
+        for col in ["SN", "Project", "Reward", "Technologies", "#Links"]:
+            if col == "Reward":
+                table.add_column(col, justify="center", header_style="cyan", style="green")
+            else:
+                table.add_column(col, justify="center", header_style="cyan")
+    # print('-'*120)
     
     # print(projects[0].__dict__)
     sn = 1
@@ -187,20 +207,24 @@ def display_projects(projects, type=None, option=None):
         tech = '|'.join(project.technologies) if project.technologies else None
         if type:
             if project.assets_in_scope[type]:
-                print(FORMAT % (sn, project.project, project.maximum_reward, tech, len(project.assets_in_scope[type])))
+                # print(FORMAT % (sn, project.project, project.maximum_reward, tech, len(project.assets_in_scope[type])))
+                table.add_row(str(sn), project.project, get_dollar_repr(project.maximum_reward), tech, str(len(project.assets_in_scope[type])))
                 sn += 1
         elif option == 'ltc':
             # number_contracts = sum((project.num_contracts[k]) for k in project.num_contracts)
             number_contracts = project.num_contracts
             if number_contracts:
-                print(FORMAT % (sn, project.project, project.maximum_reward, tech, number_contracts))
+                # print(FORMAT % (sn, project.project, project.maximum_reward, tech, number_contracts))
+                table.add_row(str(sn), project.project, get_dollar_repr(project.maximum_reward), tech, str(number_contracts))
                 sn += 1   
         else:
             number_contract_links = sum(len(project.assets_in_scope[k]) for k in project.assets_in_scope)
             if number_contract_links:
-                print(FORMAT % (sn, project.project, project.maximum_reward, tech, number_contract_links))
-                sn += 1   
-    print('-'*120)     
+                # print(FORMAT % (sn, project.project, project.maximum_reward, tech, number_contract_links))
+                table.add_row(str(sn), project.project, get_dollar_repr(project.maximum_reward), tech, str(number_contract_links))
+                sn += 1
+    # print('-'*120)
+    console.print(table)
 
 def search_contract(projects, query):
     results = []
@@ -239,12 +263,12 @@ if parser.get('list_programs', None):
         # import pdb; pdb.set_trace()
         filtered_projects = sorted(projects, key=lambda x: x.num_contracts, reverse=False)
         display_projects(filtered_projects, option='ltc')
-    elif parser.get('test', None):
-        print('Testing')
-        LINK = ['https://etherscan.io/address/0xeecee260a402fe3c20e5b8301382005124bef121a', \
-            'https://etherscan.io/address/0xde229e52bdb72c449db7912968e51d9d5e793005', \
-            'https://etherscan.io/address/0xca1bf9e6add6155e92dc1dc7c0bf210c159a2f43']
-        print(get_number_of_contracts(contract_list=LINK))
+    # elif parser.get('test', None):
+    #     print('Testing')
+    #     LINK = ['https://etherscan.io/address/0xeecee260a402fe3c20e5b8301382005124bef121a', \
+    #         'https://etherscan.io/address/0xde229e52bdb72c449db7912968e51d9d5e793005', \
+    #         'https://etherscan.io/address/0xca1bf9e6add6155e92dc1dc7c0bf210c159a2f43']
+    #     print(get_number_of_contracts(contract_list=LINK))
     else:
         display_projects(projects)
 
@@ -253,10 +277,10 @@ if parser.get('query', None):
     t0 = time.time()
     res = get_data(parser.get('query'))
     t1 = time.time()
-    print(f"{t1-t0} seconds to process {len(projects)} projects.")
+    print(f"{t1-t0} seconds to process {len(res)} projects.")
     # res = search_contract(projects, parser.get('query'))
     if res:
-        display_projects(res)        
+        display_projects(res)
         for item in res:
             print(f"Links for {item.project}:")
             for rec in item.assets_in_scope:
@@ -277,4 +301,7 @@ if parser.get('query', None):
         print(f"Not able to find project : {parser.get('query')}")
 
 if parser.get('links', None):
-    download_contracts(parser.get('links'), project_name=parser.get('folder_name'))
+    prepare_links = [{'url': link} for link in parser.get('links')]
+    links = get_assets(prepare_links)
+    download_contracts(links['contract'], project_name=parser.get('folder_name'))
+    download_github(links['github'], project_name=parser.get('folder_name'))

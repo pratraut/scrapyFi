@@ -3,3 +3,4 @@ requests
 argparse
 terminal_banner
 termcolor
+rich
