@@ -107,9 +107,22 @@ def download(link, project_name):
     except Exception as err:
         raise err
 
+    dir_count = 1
+    dir_path = output_path
+    while os.path.exists(dir_path):
+        dir_path = output_path + "_" + str(dir_count)
+        dir_count += 1
+        
+    output_path = dir_path
+
     if not os.path.exists(output_path):
         os.makedirs(output_path)
-        print(f"[#] The {output_path} directory has been created.")
+        print(f"[#] Directory {output_path} has been created.")        
+
+    contract_address = re.search(r"0x\w+", link).group(0)
+    print("Contract address is ", contract_address)
+    with open(os.path.join(output_path, contract_address + ".txt"), "w"):
+        pass
 
     if not filenames:
         filenames = [f'{contract_name}.sol']
