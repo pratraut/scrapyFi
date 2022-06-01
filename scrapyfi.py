@@ -17,7 +17,7 @@ banner_text = f"""{COLOR}
                     Author: savi0ur
 """
 
-desc = "Helps in Search of program and Download contracts of a program from immunefi"
+desc = "Helps in Search of program and Download contracts of a program from Immunefi"
 dev_info = """
 v1.0
 Developed by: Prathamesh Raut (savi0ur)
@@ -74,19 +74,34 @@ def get_assets(assets):
         return new_assets
 
     for asset in assets:
-        if 'github' in asset['target']:
+        if 'github' in asset['url']:
             # new_assets['github'] = new_assets.get('github', [])
-            new_assets['github'].append(asset['target'])
-        elif '/0x' in asset['target']:
+            new_assets['github'].append(asset['url'])
+        elif '/0x' in asset['url']:
             # new_assets['contract'] = new_assets.get('contract', [])
-            new_assets['contract'].append(asset['target'])
+            new_assets['contract'].append(asset['url'])
         else:
             # new_assets['other'] = new_assets.get('other', [])
-            new_assets['other'].append(asset['target'])
+            new_assets['other'].append(asset['url'])
     return new_assets
 
-def get_data():
-    url = 'https://immunefi.com/explore'
+def get_project_data(url):
+    try:
+        page = requests.get(url)
+    except requests.ConnectionError:
+        print(f"[-] Unable to fetch URL : {url}. Make sure you are connected to the internet")
+        exit()
+
+    soup = BeautifulSoup(page.content, 'html.parser')   
+
+    soup = soup.find("script", id="__NEXT_DATA__")
+    json_data = json.loads(soup.string)
+    bounty = json_data['props']['pageProps']['bounty']
+    return bounty
+    
+def get_data(query=None):
+    url = 'https://immunefi.com/explore/'
+    main_url = 'https://immunefi.com'
     try:
         page = requests.get(url)
     except requests.ConnectionError:
@@ -98,28 +113,60 @@ def get_data():
     soup = soup.find("script", id="__NEXT_DATA__")
     json_data = json.loads(soup.string)
     bounties = json_data['props']['pageProps']['bounties']
-    print("Total number of projects :", len(bounties))
-
+    # print("Total number of projects :", len(bounties))
     projects = []
-    for project in bounties:
-        try:
-            project_detail = {}
-            project_detail['id'] = get(project, 'id')
-            project_detail['project'] = get(project, 'project')
-            project_detail['date'] = get(project, 'date')
-            project_detail['maximum_reward'] = get(project, 'maximum_reward')
-            project_detail['technologies'] = get(project, 'technologies')
-            project_detail['kyc'] = get(project, 'kyc')
-            project_detail['assets_in_scope'] = get_assets(get(project, 'assets_in_scope'))
-            project_detail['url'] = get(project, 'url')            
-            project_detail['num_contracts'] = 0
-            if parser.get('least_total_contracts', None):
-                # print("Project = ", project_detail['project'])
-                project_detail['num_contracts'] = get_number_of_contracts(contract_list=project_detail['assets_in_scope']['contract']) 
-                    # count_github_files(project_detail['assets_in_scope']['github'])
-            projects.append(Project(**project_detail))
-        except Exception as err:
-            print("Exception =", err)
+    if query:
+        for project in bounties:
+            if query.lower() in project['project'].lower():
+                try:
+                    project_detail = {}
+                    project_detail['id'] = get(project, 'id')
+                    project_detail['project'] = get(project, 'project')
+                    project_detail['date'] = get(project, 'date')
+                    project_detail['maximum_reward'] = get(project, 'maximum_reward')
+                    project_detail['technologies'] = get(project, 'technologies')
+                    bounty_url = main_url + '/bounty/' + project_detail['id']
+                    project_detail['url'] = bounty_url
+                    project_ext_data = get_project_data(bounty_url)
+                    project_detail['kyc'] = get(project_ext_data, 'kyc')
+
+                    assets = project_ext_data['assets']
+                    project_detail['assets_in_scope'] = get_assets(assets)
+                    project_detail['num_contracts'] = 0
+                    if parser.get('least_total_contracts', None):
+                        # print("Project = ", project_detail['project'])
+                        project_detail['num_contracts'] = get_number_of_contracts(contract_list=project_detail['assets_in_scope']['contract']) 
+                        # count_github_files(project_detail['assets_in_scope']['github'])
+                    projects.append(Project(**project_detail))
+                except Exception as err:
+                    print("Exception =", err)
+    else:
+        for project in bounties:
+            if project['is_external']:
+                continue
+
+            try:
+                project_detail = {}
+                project_detail['id'] = get(project, 'id')
+                project_detail['project'] = get(project, 'project')
+                project_detail['date'] = get(project, 'date')
+                project_detail['maximum_reward'] = get(project, 'maximum_reward')
+                project_detail['technologies'] = get(project, 'technologies')
+                bounty_url = main_url + '/bounty/' + project_detail['id']
+                project_detail['url'] = bounty_url
+                project_ext_data = get_project_data(bounty_url)
+                project_detail['kyc'] = get(project_ext_data, 'kyc')
+
+                assets = project_ext_data['assets']
+                project_detail['assets_in_scope'] = get_assets(assets)
+                project_detail['num_contracts'] = 0
+                if parser.get('least_total_contracts', None):
+                    # print("Project = ", project_detail['project'])
+                    project_detail['num_contracts'] = get_number_of_contracts(contract_list=project_detail['assets_in_scope']['contract']) 
+                        # count_github_files(project_detail['assets_in_scope']['github'])
+                projects.append(Project(**project_detail))
+            except Exception as err:
+                print("Exception =", err)
 
     return projects
   
@@ -134,6 +181,7 @@ def display_projects(projects, type=None, option=None):
         print(FORMAT % ("SN", "Project", "Reward($)", "Tech", "#Links"))
     print('-'*120)
     
+    # print(projects[0].__dict__)
     sn = 1
     for project in projects:
         tech = '|'.join(project.technologies) if project.technologies else None
@@ -162,7 +210,7 @@ def search_contract(projects, query):
     return results
 
 projects = []
-if parser.get('list_programs', None) or parser.get('query', None):
+if parser.get('list_programs', None):
     t0 = time.time()
     projects = get_data()
     t1 = time.time()
@@ -202,7 +250,11 @@ if parser.get('list_programs', None):
 
 if parser.get('query', None):
     print(f"Searching for {parser.get('query')}...")
-    res = search_contract(projects, parser.get('query'))
+    t0 = time.time()
+    res = get_data(parser.get('query'))
+    t1 = time.time()
+    print(f"{t1-t0} seconds to process {len(projects)} projects.")
+    # res = search_contract(projects, parser.get('query'))
     if res:
         display_projects(res)        
         for item in res:
