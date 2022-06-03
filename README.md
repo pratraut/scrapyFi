@@ -30,7 +30,7 @@ Scraper for Immunefi. It will help you to perform below task:
 
 ## Usage
 ```
-$ scrapyfi.py [-h] {list,search,download}
+$ scrapyfi.py [-h] {list,search,download} ...
 
   list                List programs
   search              Search programs
@@ -57,11 +57,13 @@ $ scrapyfi.py list [-h] [-lcl] [-lgl] [-lol] [-ltl] [-ltc] [-t]
 
 ### Details of Search option
 ```
-$ scrapyfi.py search [-h] -q QUERY [-d]
+$ scrapyfi.py search [-h] -q QUERY [-d] [-f FILTER]
 
   -q QUERY, --query QUERY
                         Query particular program by its name. Ex. MakerDAO
   -d, --download        Download all contracts code from queried program
+  -f FILTER, --filter FILTER
+                        Filter results of a queried program
 ```
 
 ### Details of Download option
