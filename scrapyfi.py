@@ -52,6 +52,7 @@ list_argp.add_argument("-ltc", "--least-total-contracts", help="list projects by
 search_argp = sub_argp.add_parser("search", help="Search programs")
 search_argp.add_argument("-q", "--query", help="Query particular program by its name. Ex. MakerDAO", required=True)
 search_argp.add_argument("-d", "--download", help="Download all contracts code from queried program", action="store_true")
+search_argp.add_argument("-f", "--filter", help="Filter results of a queried program", required=False)
 
 # Download
 download_argp = sub_argp.add_parser("download", help="Download code from link")
@@ -70,7 +71,7 @@ def get(obj, id):
         return obj[id]
     return None
 
-def get_assets(assets):    
+def get_assets(assets, filter=None):    
     new_assets = {}
     new_assets['github'] = []
     new_assets['contract'] = []
@@ -79,6 +80,9 @@ def get_assets(assets):
         return new_assets
 
     for asset in assets:
+        if filter and filter not in asset['url']:
+            continue
+        
         if 'github' in asset['url']:
             # new_assets['github'] = new_assets.get('github', [])
             new_assets['github'].append(asset['url'])
@@ -104,7 +108,7 @@ def get_project_data(url):
     bounty = json_data['props']['pageProps']['bounty']
     return bounty
     
-def get_data(query=None):
+def get_data(query=None, filter=None):
     url = 'https://immunefi.com/explore/'
     main_url = 'https://immunefi.com'
     try:
@@ -136,7 +140,7 @@ def get_data(query=None):
                     project_detail['kyc'] = get(project_ext_data, 'kyc')
 
                     assets = project_ext_data['assets']
-                    project_detail['assets_in_scope'] = get_assets(assets)
+                    project_detail['assets_in_scope'] = get_assets(assets, filter=filter)
                     project_detail['num_contracts'] = 0
                     if parser.get('least_total_contracts', None):
                         # print("Project = ", project_detail['project'])
@@ -274,7 +278,8 @@ if parser.get('list_programs', None):
 if parser.get('query', None):
     print(f"Searching for {parser.get('query')}...")
     t0 = time.time()
-    res = get_data(parser.get('query'))
+    # print("Filter =", parser.get("filter"))
+    res = get_data(parser.get('query'), filter=parser.get("filter"))
     t1 = time.time()
     print(f"{t1-t0} seconds to process {len(res)} projects.")
     # res = search_contract(projects, parser.get('query'))
