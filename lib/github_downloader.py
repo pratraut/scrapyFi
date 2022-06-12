@@ -58,7 +58,7 @@ def raw_download(link, proj_name=""):
     # print("Status code =", content.status_code)
     # print("Redirect URL =", content.url)
     redirect_url = content.url
-    content = requests.get(redirect_url, allow_redirects=False)
+    content = requests.get(redirect_url, allow_redirects=False, timeout=int(os.environ['TIMEOUT']))
 
     DOWNLOAD_PATH = os.path.join(os.getcwd(), "downloaded_contracts", proj_name)
     print(f"[#] Downloading repo/files from {link}:")

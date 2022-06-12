@@ -30,11 +30,19 @@ Scraper for Immunefi. It will help you to perform below task:
 
 ## Usage
 ```
-$ scrapyfi.py [-h] {list,search,download} ...
+$ scrapyfi.py [-h] [-t TIMEOUT] {list,search,download} ...
 
-  list                List programs
-  search              Search programs
-  download            Download code from link
+positional arguments:
+  {list,search,download}
+                        Commands
+    list                List programs
+    search              Search programs
+    download            Download code from link
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -t TIMEOUT, --timeout TIMEOUT
+                        timeout for each request in seconds (default: 10 sec)
 ```
 **Default download folder is** `$(PWD)/downloaded_contracts/<project-name>`
 
