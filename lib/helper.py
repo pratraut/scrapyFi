@@ -96,8 +96,8 @@ def get_patterns(link):
 
 def download(link, project_name):
     CODE_PATTERN, FILENAME_PATTERN, CONTRACT_NAME_PATTERN = get_patterns(link)
-    try:
-        res = requests.get(f"{link}", headers=headers).text
+    try:        
+        res = requests.get(f"{link}", headers=headers, timeout=int(os.environ['TIMEOUT'])).text
         code_pattern = re.compile(CODE_PATTERN, re.S)
         filename_pattern = re.compile(FILENAME_PATTERN)
         contract_name = re.search(CONTRACT_NAME_PATTERN, res, re.S).group(1)
@@ -146,7 +146,7 @@ def get_contract_count(link):
 
     _, FILENAME_PATTERN, _ = get_patterns(link)
     try:
-        res = requests.get(f"{link}", headers=headers).text
+        res = requests.get(f"{link}", headers=headers, timeout=int(os.environ['TIMEOUT'])).text
         filename_pattern = re.compile(FILENAME_PATTERN)
         filenames = filename_pattern.findall(res)
     except Exception as err:

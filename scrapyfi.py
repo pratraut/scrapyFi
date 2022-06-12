@@ -27,7 +27,7 @@ v1.0
 
 if(platform.system() == 'Windows'):
     os.system('cls')
-if(platform.system() == 'Linux'):
+if(platform.system().lower() in ['linux', 'darwin']):
     os.system('clear')
 
 banner = terminal_banner.Banner(banner_text)
@@ -36,6 +36,8 @@ print(termcolor.colored(desc,'white', attrs=['bold']), end = "")
 print(termcolor.colored(dev_info,'yellow'))
 
 argp = argparse.ArgumentParser()
+argp.add_argument("-t", "--timeout", type=int, help="timeout for each request in seconds (default: 10 sec)", default=10)
+
 sub_argp = argp.add_subparsers(help="Commands")
 
 # List
@@ -60,6 +62,9 @@ download_argp.add_argument("links", help="Download all contracts code from provi
 download_argp.add_argument("-fn", "--folder-name", help="Folder name to store contracts", default="Custom Downloads")
 
 parser = vars(argp.parse_args())
+
+# Sets the environment variable for timeout
+os.environ['TIMEOUT'] = str(parser['timeout'])
 
 # print(parser)
 
@@ -96,7 +101,7 @@ def get_assets(assets, filter=None):
 
 def get_project_data(url):
     try:
-        page = requests.get(url)
+        page = requests.get(url, timeout=int(os.environ['TIMEOUT']))
     except requests.ConnectionError:
         print(f"[-] Unable to fetch URL : {url}. Make sure you are connected to the internet")
         exit()
@@ -112,7 +117,7 @@ def get_data(query=None, filter=None):
     url = 'https://immunefi.com/explore/'
     main_url = 'https://immunefi.com'
     try:
-        page = requests.get(url)
+        page = requests.get(url, timeout=int(os.environ['TIMEOUT']))
     except requests.ConnectionError:
         print(f"[-] Unable to fetch URL : {url}. Make sure you are connected to the internet")
         exit()
