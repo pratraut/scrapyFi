@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 import requests
 import html.parser
 import concurrent.futures
@@ -131,8 +130,8 @@ def download(link, project_name):
     # return
     for code, filename in zip(source_codes, filenames):
         with open(os.path.join(output_path, filename), "w") as fp:
-            html_parser = html.parser.HTMLParser()
-            code = html_parser.unescape(code)
+            # html_parser = html.parser.HTMLParser()
+            code = html.unescape(code)
             print(f"[+] Download {filename}...")
             fp.write(code)
         
@@ -174,7 +173,7 @@ def download_contracts(contract_list, project_name):
         try:
             download(contract_link, project_name)
         except Exception as err:
-            # print(err)
+            print(err)
             print(f'Error: while downloading - Contract might be updated/deleted or contains bytecode\n')
 
 def get_number_of_contracts(contract_list):

@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-import requests, os, json, argparse, re
+import requests, os, json, argparse
 from lib.helper import *
 from lib.github_downloader import *
 
@@ -130,6 +130,7 @@ def get_data(query=None, filter=None):
     # print("Total number of projects :", len(bounties))
     projects = []
     if query:
+        # Search for query string in projects
         for project in bounties:
             if query.lower() in project['project'].lower():
                 try:
@@ -155,6 +156,7 @@ def get_data(query=None, filter=None):
                 except Exception as err:
                     print("Exception =", err)
     else:
+        # List all projects
         for project in bounties:
             if project['is_external']:
                 continue
