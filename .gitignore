@@ -3,3 +3,4 @@ venv/
 tmp/
 .DS_Store
 *.notes
+.gitpod.yml

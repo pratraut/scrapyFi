@@ -114,6 +114,10 @@ NOTE: Ignoring programs with zero contract links
 └─────┴────────────────────────┴─────────────┴─────────────────────────────────────────────────────────┴────────┘
 ```
 
+**CLI Demo**
+
+![](./demogifs/1List.gif)
+
 ### Search 
 ```
 $ python3 scrapyfi.py search -q "wormhole"
@@ -154,6 +158,9 @@ OTHER:
 	2. https://portalbridge.com
 	3. https://wormholenetwork.com/explorer/
 ```
+**CLI Demo**
+
+![](./demogifs/2SearchAndDownload.gif)
 
 ### Download
 ```
@@ -187,3 +194,7 @@ Contract address is  0x98f3c9e6E3fAce36bAAd05FE09d375Ef1464288B
 [+] Downloading dai.sol...
 [#] File "dai.sol" downloaded successfully in /Users/pratraut/Public/scrapyFi/downloaded_contracts/Custom Download/dss
 ```
+
+**CLI Demo**
+
+![](./demogifs/3DLSingleContract.gif) 
