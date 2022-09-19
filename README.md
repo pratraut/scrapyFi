@@ -13,6 +13,9 @@ Scraper for Immunefi. It will help you to perform below task:
 2. Query particular project with its project name and list basic details alongs with all smart contract links. It will also let you download all those contracts.
 3. Download all contracts from provided links
 
+## Requirement
+Python 3.9+
+
 ## Supported Platform
 [Immunefi](https://immunefi.com/explore/)
 
@@ -27,6 +30,7 @@ Scraper for Immunefi. It will help you to perform below task:
 * [https://bscscan.com/](https://bscscan.com/)
 * [https://testnet.bscscan.com/](https://testnet.bscscan.com/)
 * [https://blockscout.com/](https://blockscout.com/)
+* [https://aurorascan.dev/](https://aurorascan.dev/)
 
 ## Usage
 ```
