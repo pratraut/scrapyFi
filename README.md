@@ -9,9 +9,10 @@
                                ''''      ''                                                                                                
 ```
 Scraper for Immunefi. It will help you to perform below task:
-1. List all the projects from immunefi with basic details in tabular form
+1. List all the projects from immunefi with basic details in tabular form.
 2. Query particular project with its project name and list basic details alongs with all smart contract links. It will also let you download all those contracts.
-3. Download all contracts from provided links
+3. Download all contracts from provided links.
+4. If given contract is a proxy, it will also download its implementation contracts.
 
 ## Requirement
 Python 3.9+
@@ -21,9 +22,6 @@ Python 3.9+
 
 ### Supported blockchain scanner for downloading contracts
 * [https://etherscan.io/](https://etherscan.io/)
-* [https://rinkeby.etherscan.io/](https://rinkeby.etherscan.io/)
-* [https://ropsten.etherscan.io/](https://ropsten.etherscan.io/)
-* [https://kovan.etherscan.io/](https://kovan.etherscan.io/)
 * [https://goerli.etherscan.io/](https://goerli.etherscan.io/)
 * [https://polygonscan.com/](https://polygonscan.com/)
 * [https://mumbai.polygonscan.com/](https://mumbai.polygonscan.com/)

@@ -20,51 +20,43 @@ class EtherscanPattern:
     CODE = r"<pre class='js-sourcecopyarea editor' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
     FILENAME = r"File \d+ of \d+ : (.*?)</span>"
     CONTRACT_NAME = r"Contract Name.*?<span.*?>(.*?)</span>"
-
-class RinkebyEtherscanPattern:
-    CODE = r"<pre class='js-sourcecopyarea editor' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
-    FILENAME = r"File \d+ of \d+ : (.*?)</span>"
-    CONTRACT_NAME = r"Contract Name.*?<span.*?>(.*?)</span>"
-
-class RopstenEtherscanPattern:
-    CODE = r"<pre class='js-sourcecopyarea editor' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
-    FILENAME = r"File \d+ of \d+ : (.*?)</span>"
-    CONTRACT_NAME = r"Contract Name.*?<span.*?>(.*?)</span>"
-
-class KovanEtherscanPattern:
-    CODE = r"<pre class='js-sourcecopyarea editor' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
-    FILENAME = r"File \d+ of \d+ : (.*?)</span>"
-    CONTRACT_NAME = r"Contract Name.*?<span.*?>(.*?)</span>"
+    IMPLEMENTATION_ADDRESS = r"ABI for the implementation contract at.*?<a.*?>(.*?)</a>"
 
 class GoerliEtherscanPattern:
     CODE = r"<pre class='js-sourcecopyarea editor' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
     FILENAME = r"File \d+ of \d+ : (.*?)</span>"
     CONTRACT_NAME = r"Contract Name.*?<span.*?>(.*?)</span>"
+    IMPLEMENTATION_ADDRESS = r"ABI for the implementation contract at.*?<a.*?>(.*?)</a>"
 
 class MumbaiPolygonscanPattern:
     CODE = r"<pre class='js-sourcecopyarea editor' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
     FILENAME = r"File \d+ of \d+ : (.*?)</span>"
     CONTRACT_NAME = r"Contract Name.*?<span.*?>(.*?)</span>"
+    IMPLEMENTATION_ADDRESS = r"ABI for the implementation contract at.*?<a.*?>(.*?)</a>"
 
 class PolygonscanPattern:
     CODE = r"<pre class='js-sourcecopyarea editor' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
     FILENAME = r"File \d+ of \d+ : (.*?)</span>"
     CONTRACT_NAME = r"Contract Name.*?<span.*?>(.*?)</span>"
+    IMPLEMENTATION_ADDRESS = r"ABI for the implementation contract at.*?<a.*?>(.*?)</a>"
 
 class TestnetBscscanPattern:
     CODE = r"<pre class='js-sourcecopyarea editor' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
     FILENAME = r"File \d+ of \d+ : (.*?)</span>"
     CONTRACT_NAME = r"Contract Name.*?<span.*?>(.*?)</span>"
+    IMPLEMENTATION_ADDRESS = r"ABI for the implementation contract at.*?<a.*?>(.*?)</a>"
 
 class BscscanPattern:
     CODE = r"<pre class='js-sourcecopyarea editor' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
     FILENAME = r"File \d+ of \d+ : (.*?)</span>"
     CONTRACT_NAME = r"Contract Name.*?<span.*?>(.*?)</span>"
+    IMPLEMENTATION_ADDRESS = r"ABI for the implementation contract at.*?<a.*?>(.*?)</a>"
 
 class BlockscoutPattern:
     CODE = r"<button type=\"button\" class=\"btn-line\" id=\"button\" data-toggle=\"tooltip\" data-placement=\"top\" data-clipboard-text=\"(.*?)\""
     FILENAME = r"File \d+ of \d+ : (.*?)</span>"
     CONTRACT_NAME = r"Contract name:.*?<dd.*?>(.*?)</dd>"
+    IMPLEMENTATION_ADDRESS = r"ABI for the implementation contract at.*?<a.*?>(.*?)</a>"
 
 PWD = os.getcwd()
 
@@ -74,9 +66,6 @@ headers = {
 
 def get_patterns(link):
     scanners = {
-        'rinkeby.etherscan.io' : RinkebyEtherscanPattern, 
-        'ropsten.etherscan.io' : RopstenEtherscanPattern, 
-        'kovan.etherscan.io' : KovanEtherscanPattern, 
         'goerli.etherscan.io' : GoerliEtherscanPattern,        
         'etherscan.io' : EtherscanPattern,
         'mumbai.polygonscan.com' : MumbaiPolygonscanPattern, 
@@ -91,28 +80,61 @@ def get_patterns(link):
             pattern = scanners[scanner]
             break
 
-    return pattern.CODE, pattern.FILENAME, pattern.CONTRACT_NAME
+    return pattern.CODE, pattern.FILENAME, pattern.CONTRACT_NAME, pattern.IMPLEMENTATION_ADDRESS
 
 def download(link, project_name):
-    CODE_PATTERN, FILENAME_PATTERN, CONTRACT_NAME_PATTERN = get_patterns(link)
-    try:        
+    CODE_PATTERN, FILENAME_PATTERN, CONTRACT_NAME_PATTERN, IMPLEMENTATION_ADDRESS_PATTERN = get_patterns(link)
+    
+    try:
+        is_proxy = False
+        proxy_contract_name = ""
+        if '#readProxyContract' in link:
+            # fetch proxy contract name
+            proxy_link = re.sub(r'#readProxyContract', '#code', link)
+            res = requests.get(f"{proxy_link}", headers=headers, timeout=int(os.environ['TIMEOUT'])).text
+            proxy_contract_name = re.search(CONTRACT_NAME_PATTERN, res, re.S).group(1)
+
+            # fetch implementation contract address
+            res = requests.get(f"{link}", headers=headers, timeout=int(os.environ['TIMEOUT'])).text
+            impl_address = re.search(IMPLEMENTATION_ADDRESS_PATTERN, res, re.S).group(1)
+            link = re.sub(r'0x.*', impl_address, link) + "#code"
+            is_proxy = True
+    except Exception as err:
+        # print("Proxy Error: ", err)
+        return
+
+    try:
         res = requests.get(f"{link}", headers=headers, timeout=int(os.environ['TIMEOUT'])).text
         code_pattern = re.compile(CODE_PATTERN, re.S)
         filename_pattern = re.compile(FILENAME_PATTERN)
         contract_name = re.search(CONTRACT_NAME_PATTERN, res, re.S).group(1)
         source_codes = code_pattern.findall(res)
         filenames = filename_pattern.findall(res)
-        output_path = os.path.join(PWD, 'downloaded_contracts', project_name, contract_name)
-    except Exception as err:
-        raise err
-
-    dir_count = 1
-    dir_path = output_path
-    while os.path.exists(dir_path):
-        dir_path = output_path + "_" + str(dir_count)
-        dir_count += 1
+        if not is_proxy:
+            output_path = os.path.join(PWD, 'downloaded_contracts', project_name, contract_name)
+            dir_count = 1
+            dir_path = output_path
+            while os.path.exists(dir_path):
+                dir_path = output_path + "_" + str(dir_count)
+                dir_count += 1
+                
+            output_path = dir_path
+        else:
+            output_path = os.path.join(PWD, 'downloaded_contracts', project_name, proxy_contract_name)
+            dir_count = 1
+            prev_path = output_path
+            next_path = output_path
         
-    output_path = dir_path
+            while os.path.exists(next_path):
+                prev_path = next_path
+                next_path = output_path + "_" + str(dir_count)
+                dir_count += 1
+            output_path = prev_path
+
+            output_path = os.path.join(output_path, "implementation", contract_name)
+    except Exception as err:
+        print(err)
+        raise err
 
     if not os.path.exists(output_path):
         os.makedirs(output_path)
@@ -165,13 +187,18 @@ def download_contracts(contract_list, project_name):
         return
 
     for contract_link in contract_list:
-        if '#code' not in contract_link and 'blockscout' not in contract_link:
-            contract_link += '#code'
-        elif 'blockscout' in contract_link and 'contracts' not in contract_link:
-            contract_link += '/contracts'
-        print(f"Downloading contract(s) from {contract_link}:")
+        proxy_contract_link = re.sub(r'#code', '', contract_link)
+        impl_contract_link = re.sub(r'#readProxyContract', '', contract_link)
+        if 'blockscout' not in proxy_contract_link:
+            proxy_contract_link += '#code'
+            impl_contract_link += '#readProxyContract'
+        elif 'contracts' not in proxy_contract_link:
+            proxy_contract_link += '/contracts'
+
+        print(f"Downloading contract(s) from {proxy_contract_link}:")
         try:
-            download(contract_link, project_name)
+            download(proxy_contract_link, project_name)
+            download(impl_contract_link, project_name)
         except Exception as err:
             print(err)
             print(f'Error: while downloading - Contract might be updated/deleted or contains bytecode\n')

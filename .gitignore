@@ -4,3 +4,5 @@ tmp/
 .DS_Store
 *.notes
 .gitpod.yml
+*.vscode
+lib/__pycache__
