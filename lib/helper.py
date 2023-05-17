@@ -17,44 +17,44 @@ class Project(object):
         self.num_contracts = kwargs['num_contracts']
 
 class EtherscanPattern:
-    CODE = r"<pre class='js-sourcecopyarea editor' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
-    FILENAME = r"File \d+ of \d+ : (.*?)</span>"
+    CODE = r"<pre class='.*?' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
+    FILENAME = r"File \d+ of \d+\s*:\s*(.*?)</span>"
     CONTRACT_NAME = r"Contract Name.*?<span.*?>(.*?)</span>"
     IMPLEMENTATION_ADDRESS = r"ABI for the implementation contract at.*?<a.*?>(.*?)</a>"
 
 class GoerliEtherscanPattern:
-    CODE = r"<pre class='js-sourcecopyarea editor' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
-    FILENAME = r"File \d+ of \d+ : (.*?)</span>"
+    CODE = r"<pre class='.*?' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
+    FILENAME = r"File \d+ of \d+\s*:\s*(.*?)</span>"
     CONTRACT_NAME = r"Contract Name.*?<span.*?>(.*?)</span>"
     IMPLEMENTATION_ADDRESS = r"ABI for the implementation contract at.*?<a.*?>(.*?)</a>"
 
 class MumbaiPolygonscanPattern:
-    CODE = r"<pre class='js-sourcecopyarea editor' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
-    FILENAME = r"File \d+ of \d+ : (.*?)</span>"
+    CODE = r"<pre class='.*?' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
+    FILENAME = r"File \d+ of \d+\s*:\s*(.*?)</span>"
     CONTRACT_NAME = r"Contract Name.*?<span.*?>(.*?)</span>"
     IMPLEMENTATION_ADDRESS = r"ABI for the implementation contract at.*?<a.*?>(.*?)</a>"
 
 class PolygonscanPattern:
-    CODE = r"<pre class='js-sourcecopyarea editor' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
-    FILENAME = r"File \d+ of \d+ : (.*?)</span>"
+    CODE = r"<pre class='.*?' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
+    FILENAME = r"File \d+ of \d+\s*:\s*(.*?)</span>"
     CONTRACT_NAME = r"Contract Name.*?<span.*?>(.*?)</span>"
     IMPLEMENTATION_ADDRESS = r"ABI for the implementation contract at.*?<a.*?>(.*?)</a>"
 
 class TestnetBscscanPattern:
-    CODE = r"<pre class='js-sourcecopyarea editor' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
-    FILENAME = r"File \d+ of \d+ : (.*?)</span>"
+    CODE = r"<pre class='.*?' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
+    FILENAME = r"File \d+ of \d+\s*:\s*(.*?)</span>"
     CONTRACT_NAME = r"Contract Name.*?<span.*?>(.*?)</span>"
     IMPLEMENTATION_ADDRESS = r"ABI for the implementation contract at.*?<a.*?>(.*?)</a>"
 
 class BscscanPattern:
-    CODE = r"<pre class='js-sourcecopyarea editor' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
-    FILENAME = r"File \d+ of \d+ : (.*?)</span>"
+    CODE = r"<pre class='.*?' id='editor\d*' style='margin-top: \d+px;'>(.*?)</pre>"
+    FILENAME = r"File \d+ of \d+\s*:\s*(.*?)</span>"
     CONTRACT_NAME = r"Contract Name.*?<span.*?>(.*?)</span>"
     IMPLEMENTATION_ADDRESS = r"ABI for the implementation contract at.*?<a.*?>(.*?)</a>"
 
 class BlockscoutPattern:
     CODE = r"<button type=\"button\" class=\"btn-line\" id=\"button\" data-toggle=\"tooltip\" data-placement=\"top\" data-clipboard-text=\"(.*?)\""
-    FILENAME = r"File \d+ of \d+ : (.*?)</span>"
+    FILENAME = r"File \d+ of \d+\s*:\s*(.*?)</span>"
     CONTRACT_NAME = r"Contract name:.*?<dd.*?>(.*?)</dd>"
     IMPLEMENTATION_ADDRESS = r"ABI for the implementation contract at.*?<a.*?>(.*?)</a>"
 
@@ -110,6 +110,7 @@ def download(link, project_name):
         contract_name = re.search(CONTRACT_NAME_PATTERN, res, re.S).group(1)
         source_codes = code_pattern.findall(res)
         filenames = filename_pattern.findall(res)
+        # print("FileNames: ", filenames)
         if not is_proxy:
             output_path = os.path.join(PWD, 'downloaded_contracts', project_name, contract_name)
             dir_count = 1
@@ -148,7 +149,7 @@ def download(link, project_name):
     if not filenames:
         filenames = [f'{contract_name}.sol']
     
-    # print(source_codes, filenames)
+    # print(len(source_codes), len(filenames))
     # return
     for code, filename in zip(source_codes, filenames):
         with open(os.path.join(output_path, filename), "w") as fp:
