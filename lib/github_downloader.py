@@ -3,6 +3,10 @@ import os
 import re
 import sys
 
+headers = {
+    "User-Agent" : "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36",
+}
+
 def safe_list_get(lst, idx, default):
   try:
     return lst[idx]
@@ -54,11 +58,11 @@ def raw_download(link, proj_name=""):
     # print("New link =", new_link)
     # print("Is File =", is_file)
 
-    content = requests.head(new_link, allow_redirects=True)
+    content = requests.head(new_link, headers=headers, timeout=int(os.environ['TIMEOUT']), allow_redirects=False)
     # print("Status code =", content.status_code)
     # print("Redirect URL =", content.url)
     redirect_url = content.url
-    content = requests.get(redirect_url, allow_redirects=False, timeout=int(os.environ['TIMEOUT']))
+    content = requests.get(redirect_url, headers=headers, allow_redirects=False, timeout=int(os.environ['TIMEOUT']))
 
     DOWNLOAD_PATH = os.path.join(os.getcwd(), "downloaded_contracts", proj_name)
     print(f"[#] Downloading repo/files from {link}:")
