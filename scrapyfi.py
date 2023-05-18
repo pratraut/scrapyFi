@@ -306,8 +306,8 @@ if parser.get('query', None):
 
         for item in res:
             if parser.get('download', None):
-                download_contracts(item.assets_in_scope['contract'], project_name=item.project)
-                download_github(item.assets_in_scope['github'], project_name=item.project)
+                download_contracts(item.assets_in_scope['contract'], project_name=item.project.strip())
+                download_github(item.assets_in_scope['github'], project_name=item.project.strip())
     else:
         print(f"Not able to find project : {parser.get('query')}")
 

@@ -92,8 +92,9 @@ def download(link, project_name):
             # fetch proxy contract name
             proxy_link = re.sub(r'#readProxyContract', '#code', link)
             res = requests.get(f"{proxy_link}", headers=headers, timeout=int(os.environ['TIMEOUT'])).text
-            proxy_contract_name = re.search(CONTRACT_NAME_PATTERN, res, re.S).group(1)
-
+            proxy_contract_name = re.search(CONTRACT_NAME_PATTERN, res, re.S).group(1).strip()
+            # print("Proxy Contract name:", proxy_contract_name, repr(proxy_contract_name))
+            # proxy_contract_name = proxy_contract_name.strip()
             # fetch implementation contract address
             res = requests.get(f"{link}", headers=headers, timeout=int(os.environ['TIMEOUT'])).text
             impl_address = re.search(IMPLEMENTATION_ADDRESS_PATTERN, res, re.S).group(1)
@@ -107,7 +108,9 @@ def download(link, project_name):
         res = requests.get(f"{link}", headers=headers, timeout=int(os.environ['TIMEOUT'])).text
         code_pattern = re.compile(CODE_PATTERN, re.S)
         filename_pattern = re.compile(FILENAME_PATTERN)
-        contract_name = re.search(CONTRACT_NAME_PATTERN, res, re.S).group(1)
+        contract_name = re.search(CONTRACT_NAME_PATTERN, res, re.S).group(1).strip()
+        # print("Contract name:", contract_name, repr(contract_name))
+        # contract_name = contract_name.strip()
         source_codes = code_pattern.findall(res)
         filenames = filename_pattern.findall(res)
         # print("FileNames: ", filenames)
@@ -152,6 +155,7 @@ def download(link, project_name):
     # print(len(source_codes), len(filenames))
     # return
     for code, filename in zip(source_codes, filenames):
+        filename = filename.strip()
         with open(os.path.join(output_path, filename), "w") as fp:
             # html_parser = html.parser.HTMLParser()
             code = html.unescape(code)
