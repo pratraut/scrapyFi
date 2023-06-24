@@ -58,11 +58,13 @@ def raw_download(link, proj_name=""):
     # print("New link =", new_link)
     # print("Is File =", is_file)
 
-    content = requests.head(new_link, headers=headers, timeout=int(os.environ['TIMEOUT']), allow_redirects=False)
+    content = requests.head(new_link, headers=headers, timeout=int(os.environ['TIMEOUT']), allow_redirects=True)
     # print("Status code =", content.status_code)
     # print("Redirect URL =", content.url)
+
     redirect_url = content.url
-    content = requests.get(redirect_url, headers=headers, allow_redirects=False, timeout=int(os.environ['TIMEOUT']))
+    content = requests.get(redirect_url, headers=headers, allow_redirects=True, timeout=int(os.environ['TIMEOUT']))
+    # print("Content:", content.content)
 
     DOWNLOAD_PATH = os.path.join(os.getcwd(), "downloaded_contracts", proj_name)
     print(f"[#] Downloading repo/files from {link}:")
@@ -74,9 +76,11 @@ def raw_download(link, proj_name=""):
 
         filename = remaining_path.split("/")[-1]   
         if not os.path.exists(os.path.join(path, filename)):     
-            with open(os.path.join(path, filename), "wb") as f:
-                print(f"[+] Downloading {filename}...")
-                f.write(content.content)
+            with open(os.path.join(path, filename), "wb"):
+                pass
+        with open(os.path.join(path, filename), "wb") as f:
+            print(f"[+] Downloading {filename}...")
+            f.write(content.content)
         print(f"[#] File \"{filename}\" downloaded successfully in {path}")
     else:
         # unzip the content    
