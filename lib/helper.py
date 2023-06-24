@@ -144,8 +144,8 @@ def download(link, project_name):
         os.makedirs(output_path)
         print(f"[#] Directory {output_path} has been created.")        
 
-    contract_address = re.search(r"0x\w+", link).group(0)
-    print("Contract address is ", contract_address)
+    contract_address = re.search(r"0x\w+", link).group(0).strip()
+    print("Contract address is", contract_address)
     with open(os.path.join(output_path, contract_address + ".txt"), "w"):
         pass
 
