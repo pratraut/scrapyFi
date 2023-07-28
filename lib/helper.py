@@ -3,6 +3,8 @@ import re
 import requests
 import html.parser
 import concurrent.futures
+import asyncio
+import aiohttp
 
 class Project(object):
     def __init__(self, **kwargs):
@@ -165,12 +167,13 @@ def download(link, project_name):
     print(f"[#] {contract_name} smart contract code downloaded successfully in {output_path}.\n")
 
 def get_contract_count(link):
+    # import pdb; pdb.set_trace()
     if '#code' not in link and 'blockscout' not in link:
         link += '#code'
     elif 'blockscout' in link and 'contracts' not in link:
         link += '/contracts'
 
-    _, FILENAME_PATTERN, _ = get_patterns(link)
+    _, FILENAME_PATTERN, _, _ = get_patterns(link)
     try:
         res = requests.get(f"{link}", headers=headers, timeout=int(os.environ['TIMEOUT'])).text
         filename_pattern = re.compile(FILENAME_PATTERN)
@@ -208,6 +211,17 @@ def download_contracts(contract_list, project_name):
             print(err)
             print(f'Error: while downloading - Contract might be updated/deleted or contains bytecode\n')
 
+async def fetch_details(session, url):
+    async with session.get(url) as response:
+        if response.status == 200:
+            return await response.text()
+
+async def fetch_all_details(links):
+    async with aiohttp.ClientSession():
+        tasks = [get_contract_count(url) for url in links]
+        results = await asyncio.gather(*tasks)
+        return results
+    
 def get_number_of_contracts(contract_list):
     contract_count = {}
     
@@ -219,6 +233,10 @@ def get_number_of_contracts(contract_list):
     for url in contract_list:
         contract_count[url] = 0
 
+    # loop = asyncio.get_event_loop()
+    # details = loop.run_until_complete(fetch_all_details(contract_list))
+    # print("Details:", details)
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
         # executor.map(get_contract_count, contract_list)
         future_to_url = {executor.submit(get_contract_count, url): url for url in contract_list}
@@ -226,7 +244,10 @@ def get_number_of_contracts(contract_list):
             url = future_to_url[future]
             try:
                 data = future.result()
+                # print("Data:", data)
             except Exception as exc:
+                # import traceback
+                # traceback.print_stack()
                 print('%r generated an exception: %s' % (url, exc))
             else:
                 # print('%r is having %d contracts' % (url, data))

@@ -177,7 +177,7 @@ def get_data(query=None, filter=None):
                 project_detail['assets_in_scope'] = get_assets(assets)
                 project_detail['num_contracts'] = 0
                 if parser.get('least_total_contracts', None):
-                    # print("Project = ", project_detail['project'])
+                    # print("Project = ", project_detail['assets_in_scope']['contract'])
                     project_detail['num_contracts'] = get_number_of_contracts(contract_list=project_detail['assets_in_scope']['contract']) 
                         # count_github_files(project_detail['assets_in_scope']['github'])
                 projects.append(Project(**project_detail))
