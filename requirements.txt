@@ -4,3 +4,4 @@ argparse
 terminal_banner
 termcolor
 rich
+aiohttp
